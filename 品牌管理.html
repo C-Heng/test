@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>品牌管理</title>
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <style>
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+        h1{
+            text-align: center;
+        }
+
+        #app {
+            width: 800px;
+            margin: 20px auto;
+        }
+
+        tr {
+            height: 50px;
+            text-align: center;
+        }
+
+        .form-control {
+            height: 40px;
+            padding: 10px;
+            width: 100%;
+            border: 1px solid #DDD;
+            border-radius: 4px;
+        }
+
+        .btn {
+            border: 1px solid #DDD;
+            width: 60px;
+            line-height: 30px;
+            text-align: center;
+            color: #555;
+            background: #EEE;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            outline: 0;
+        }
+
+        .active {
+            background-color: #EEE;
+        }
+
+        table,
+        td {
+            border: 1px solid #CCC;
+            /* 合并边框 */
+            border-collapse: collapse;
+        }
+
+        .btn.danger {
+            background-color: #D9534F;
+            color: #FFF;
+        }
+
+        .btn.success {
+            background-color: #337AB7;
+            color: #FFF;
+        }
+
+        .line {
+            border-bottom: 1px solid #DDD;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app">
+        <h1>品牌管理</h1>
+        <div class="line"></div>
+        <p>品牌数量：{{this.list.length}}</p>
+        <div class="line"></div>
+        <div>
+            <input class="form-control" id="edit" type="text" placeholder="请输入品牌名称" v-model.trim='name'
+                @keyup.enter='submit'>
+        </div>
+        <div class="line"></div>
+        <table cellpadding="0" cellspacing="0" width="100%">
+            <thead>
+                <tr class="active">
+                    <td width="120">id</td>
+                    <td>品牌名称</td>
+                    <td>添加时间</td>
+                    <td>操作</td>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in list" :key="item.id">
+                    <td>{{item.id}}</td>
+                    <td>{{item.name}}</td>
+                    <td>{{item.ntime|times}}</td>
+                    <td>
+                        <button class="btn danger" @click='del(item.id)'>删除</button>
+                        <button class="btn success" @click='edit(item)'>编辑</button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</body>
+<script>
+    Vue.filter('times', function (time) {
+        let data = new Date(time);
+        let y = data.getFullYear();
+        let m = data.getMonth() + 1;
+        let d = data.getDate();
+        let h = data.getHours();
+        let min = data.getMinutes();
+        let s = data.getSeconds();
+        if (m < 10) {
+            m = '0' + m
+        }
+        if (s < 10) {
+            s = '0' + s
+        }
+        return `${y}/${m}/${d}-${h}:${min}:${s}`;
+    })
+    new Vue({
+        el: '#app',
+        data: {
+            name: '',
+            list: [],
+            listId:'',
+            newId: 0,
+        },
+        methods: {
+            //判断执行的函数
+            submit() {
+                if (this.newId == 0) {
+                    this.add()
+                } else {
+                    this.updata()
+                }
+            },
+
+            //添加品牌
+            add() {
+                //简易验证
+                if (this.name == '') {
+                    alert('请输入品牌名称')
+                    return false
+                }
+                //构造品牌对象
+                let id = this.list.length > 0 ? this.list[0].id + 1 : 1;
+                let obj = { id, name: this.name, ntime: Date.now() };
+                //将构造出来的对象插入数组开头
+                this.list.unshift(obj);
+                //重置表单
+                this.name = ''
+                //写入本地储存localStorage
+                localStorage.setItem('pinpai', JSON.stringify(this.list))
+            },
+            //获取数组里需要修改的对象
+            edit(old) {
+                this.name = old.name;
+                this.newId = old.id;
+                edit.focus();
+            },
+            //编辑品牌
+            updata() {
+                //获取当前数组里的对象下标
+                let index = this.list.findIndex(item => item.id === this.newId);
+                this.list[index].name = this.name;
+                this.list[index].ntime = Date.now();
+                localStorage.setItem('pinpai', JSON.stringify(this.list));
+                this.name = '';
+                this.newId = 0;
+            },
+            getList() {
+                let list = JSON.parse(localStorage.getItem('pinpai') || '[]')
+                this.list = list;
+            },
+            del(id) {
+                let index = this.list.findIndex(item => id === item.id);
+                this.list.splice(index, 1);
+                localStorage.setItem('pinpai', JSON.stringify(this.list))
+            }
+        },
+        created() {
+            this.getList()
+        }
+    });
+</script>
+
+</html>
